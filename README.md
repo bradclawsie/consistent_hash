@@ -10,3 +10,4 @@ This technique is explained in these links:
 http://en.wikipedia.org/wiki/Consistent_hashing
 
 http://www.tomkleinpeter.com/2008/03/17/programmers-toolbox-part-3-consistent-hashing/
+
