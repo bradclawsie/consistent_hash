@@ -5,15 +5,17 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"hash/crc32"
 	"math/rand"
 	"encoding/base64"
 )
 
 func TestBuildCH(t *testing.T) {
-	mult := 40
+	fmt.Printf("\n---\nTEST BUILD, INSERT AND FIND\n")
+	mult := 100
 	ch := NewConsistentHash(mult)
-	items := []string{"127.0.0.1","127.0.1.1","127.1.0.1","127.9.0.1","127.0.8.1","127.10.0.1","127.1.1.1",
-		"128.0.0.1","128.0.1.1","128.1.0.1","128.9.0.1","128.0.8.1","128.10.0.1","128.1.1.1"}
+	items := []string{"127.0.0.1","17.0.1.1","1.1.0.1","27.99.0.111","64.0.8.8","8.8.8.8","10.100.0.100",
+		"128.4.4.4","28.28.1.1","28.10.0.10","12.9.0.10","11.11.8.1","13.10.0.19","128.19.19.19"}
 	for _,item := range items {
 		insert_err := ch.Insert(item)
 		if insert_err != nil {
@@ -54,7 +56,7 @@ func TestBuildCH(t *testing.T) {
 
 	// test distribution
 	dist := make(map [string] int)
-	total := 1000000
+	total := 10000
 	for j := 0; j < total; j++ {
 		b64 := base64.StdEncoding.EncodeToString([]byte(strconv.Itoa(int(rand.Int31()))))
 		nearest_hash,nh_err := ch.Find(b64)
@@ -70,6 +72,7 @@ func TestBuildCH(t *testing.T) {
 }
 
 func TestEmptyCH(t *testing.T) {
+	fmt.Printf("\n---\nTEST EMPTY\n")
 	ch := NewConsistentHash(0)
 	if ch != nil {
 		t.Errorf("should return nil when mult factor 0")
@@ -85,6 +88,7 @@ func TestEmptyCH(t *testing.T) {
 }
 
 func TestCollision(t *testing.T) {
+	fmt.Printf("\n---\nTEST COLLISION\n")
 	ch := NewConsistentHash(1)
 	insert_err := ch.Insert("hello")
 	if insert_err != nil {
@@ -93,5 +97,45 @@ func TestCollision(t *testing.T) {
 	insert_err  = ch.Insert("hello")
 	if insert_err == nil {
 		t.Errorf("should have caused collision")
+	}
+}
+
+func TestRemove(t *testing.T) {
+	fmt.Printf("\n---\nTEST REMOVE\n")
+	mult := 2
+	ch := NewConsistentHash(mult)
+	items := []string{"127.0.0.1","17.0.1.1","1.1.0.1","27.99.0.111","64.0.8.8","8.8.8.8","10.100.0.100",
+		"128.4.4.4","28.28.1.1","28.10.0.10","12.9.0.10","11.11.8.1","13.10.0.19","128.19.19.19"}
+	for _,item := range items {
+		insert_err := ch.Insert(item)
+		if insert_err != nil {
+			t.Errorf(insert_err.Error())
+		}
+	}
+	
+	// remove something that isn't there
+	_ = ch.Remove("hello")
+
+	// make sure the len is correct
+	if len(ch.SumList) != (mult * len(items)) {
+		e := fmt.Sprintf("SumList len should be %d, but is %d",(mult*len(items)),len(ch.SumList))
+		t.Errorf(e)
+	}
+
+	// remove something that is there
+	_ = ch.Remove("28.28.1.1")
+
+	// make sure the len is correct
+	if len(ch.SumList) != (mult * (len(items)-1)) {
+		e := fmt.Sprintf("SumList len should be %d, but is %d",(mult*len(items)),len(ch.SumList))
+		t.Errorf(e)
+	}
+
+	sum1 := crc32.ChecksumIEEE([]byte(mult_elt("28.28.1.1",1)))
+	sum2 := crc32.ChecksumIEEE([]byte(mult_elt("28.28.1.1",2)))
+	for _,v := range ch.SumList {
+		if v == sum1 || v == sum2 {
+			t.Errorf("found element in SumList that should have been deleted")
+		}
 	}
 }

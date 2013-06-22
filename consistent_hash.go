@@ -30,6 +30,11 @@ func NewConsistentHash(mult int) (*ConsistentHash) {
 	return h
 }
 
+// the way we "multiply" a string...we simply append and integer to the end
+func mult_elt(s string,i int) string {
+	return fmt.Sprintf("%s.%d",s,i)
+}
+
 // insert a new element into the SumList. this list is kept sorted.
 func (h *ConsistentHash) insert_one(s,s_mult string) error {
 	s_sum := crc32.ChecksumIEEE([]byte(s_mult))
@@ -61,10 +66,40 @@ func (h *ConsistentHash) insert_one(s,s_mult string) error {
 // insert a new element into the SumList as "mult" instances of crc32 hashes.
 func (h *ConsistentHash) Insert(s string) error {	
 	for i := 1; i <= h.Mult; i++ {
-		s_mult := fmt.Sprintf("%s.%d",s,i)
-		insert_err := h.insert_one(s,s_mult)
+		insert_err := h.insert_one(s,mult_elt(s,i))
 		if insert_err != nil {
 			return insert_err
+		}
+	} 
+	return nil
+}
+
+// remove a single element from SumList
+func (h *ConsistentHash) remove_one(s_mult string) error {
+	s_sum := crc32.ChecksumIEEE([]byte(s_mult))
+	if _,source_ok := h.Source[s_sum]; !source_ok {
+		log.Printf("%s not found",s_mult)
+		return nil
+	}
+	hl := make([]uint32,len(h.SumList)-1)
+	i := 0
+	for _,v := range h.SumList {
+		if v != s_sum {
+			hl[i] = v
+			i++
+		}
+	}
+	h.SumList = hl	
+	delete(h.Source,s_sum)
+	return nil
+}
+
+// remove a new element from the SumList as "mult" instances of crc32 hashes.
+func (h *ConsistentHash) Remove(s string) error {	
+	for i := 1; i <= h.Mult; i++ {
+		remove_err := h.remove_one(mult_elt(s,i))
+		if remove_err != nil {
+			return remove_err
 		}
 	} 
 	return nil
