@@ -138,4 +138,41 @@ func TestRemove(t *testing.T) {
 			t.Errorf("found element in SumList that should have been deleted")
 		}
 	}
+
+	mult = 1
+	ch = NewConsistentHash(mult)
+	items = []string{"127.0.0.1","17.0.1.1","1.1.0.1","27.99.0.111","64.0.8.8","8.8.8.8","10.100.0.100",
+		"128.4.4.4","28.28.1.1","28.10.0.10","12.9.0.10","11.11.8.1","13.10.0.19","128.19.19.19"}
+	for _,item := range items {
+		insert_err := ch.Insert(item)
+		if insert_err != nil {
+			t.Errorf(insert_err.Error())
+		}
+	}
+
+	// find the target for a source. then remove that target. then reinsert it and make sure
+	// source maps once to it once again
+	nearest,err := ch.Find("helloooo")
+	if err != nil {
+		t.Errorf(err.Error())
+	}
+	fmt.Printf("initially source maps to target %s\n",nearest)
+	_ = ch.Remove(nearest)
+	nearest2,err2 := ch.Find("helloooo")
+	if err2 != nil {
+		t.Errorf(err2.Error())
+	}
+	fmt.Printf("after removal of %s, source now maps to %s\n",nearest,nearest2)
+	insert_err := ch.Insert(nearest)
+	if insert_err != nil {
+		t.Errorf(insert_err.Error())
+	}
+	nearest3,err3 := ch.Find("helloooo")
+	if err3 != nil {
+		t.Errorf(err3.Error())
+	}
+	fmt.Printf("after reinsertion of %s, source now maps to %s\n",nearest,nearest3)
+	if (nearest != nearest3) {
+		t.Errorf("was not able to round trip removal and addition of target")
+	}
 }

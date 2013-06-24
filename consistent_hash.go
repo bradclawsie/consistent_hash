@@ -5,6 +5,7 @@ import (
 	"log"
 	"errors"
 	"hash/crc32"
+	"sync"
 )
 
 type ConsistentHash struct {
@@ -14,6 +15,8 @@ type ConsistentHash struct {
 	SumList []uint32
 	// a map of hash values to original strings
 	Source (map [uint32] string)
+	// lock for access
+	mutex sync.RWMutex
 }
 
 // create a new consistent hash with hashed elements multiplied and entered
@@ -64,7 +67,9 @@ func (h *ConsistentHash) insert_one(s,s_mult string) error {
 }
 
 // insert a new element into the SumList as "mult" instances of crc32 hashes.
-func (h *ConsistentHash) Insert(s string) error {	
+func (h *ConsistentHash) Insert(s string) error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	for i := 1; i <= h.Mult; i++ {
 		insert_err := h.insert_one(s,mult_elt(s,i))
 		if insert_err != nil {
@@ -95,7 +100,9 @@ func (h *ConsistentHash) remove_one(s_mult string) error {
 }
 
 // remove a new element from the SumList as "mult" instances of crc32 hashes.
-func (h *ConsistentHash) Remove(s string) error {	
+func (h *ConsistentHash) Remove(s string) error {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
 	for i := 1; i <= h.Mult; i++ {
 		remove_err := h.remove_one(mult_elt(s,i))
 		if remove_err != nil {
@@ -110,6 +117,8 @@ func (h *ConsistentHash) Remove(s string) error {
 // value than the maximum hashed item in the SumList, loop around
 // and select the zeroth hashed element
 func (h *ConsistentHash) Find(s string) (string,error) {
+	h.mutex.Lock()
+	defer h.mutex.Unlock()	
 	if len(h.SumList) == 0 {
 		e := fmt.Sprintf("empty sumlist")
 		return "",errors.New(e)		
