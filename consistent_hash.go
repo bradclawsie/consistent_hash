@@ -19,7 +19,7 @@ type ConsistentHash struct {
 	mutex sync.RWMutex
 }
 
-// create a new consistent hash with hashed elements multiplied and entered
+// Create a new consistent hash with hashed elements multiplied and entered
 // into the SumList "mult" times.
 func NewConsistentHash(mult int) (*ConsistentHash) {
 	if mult <= 0 {
@@ -31,6 +31,11 @@ func NewConsistentHash(mult int) (*ConsistentHash) {
 	h.Mult = mult
 	h.Source = make(map [uint32] string)
 	return h
+}
+
+// Alias to NewConsistentHash
+func New(mult int) (*ConsistentHash) {
+	return NewConsistentHash(mult)
 }
 
 // the way we "multiply" a string...we simply append and integer to the end
