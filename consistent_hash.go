@@ -122,8 +122,8 @@ func (h *ConsistentHash) Remove(s string) error {
 // value than the maximum hashed item in the SumList, loop around
 // and select the zeroth hashed element
 func (h *ConsistentHash) Find(s string) (string,error) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()	
+	h.mutex.RLock()
+	defer h.mutex.RUnlock()	
 	if len(h.SumList) == 0 {
 		e := fmt.Sprintf("empty sumlist")
 		return "",errors.New(e)		
