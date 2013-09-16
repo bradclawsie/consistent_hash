@@ -1,3 +1,4 @@
+// A consistent hash library
 package consistent_hash 
 
 import (
@@ -19,7 +20,7 @@ type ConsistentHash struct {
 	mutex sync.RWMutex
 }
 
-// Create a new consistent hash with hashed elements multiplied and entered
+// NewConsistentHash will create a new consistent hash with hashed elements multiplied and entered
 // into the SumList "mult" times.
 func NewConsistentHash(mult int) (*ConsistentHash) {
 	if mult <= 0 {
@@ -33,7 +34,7 @@ func NewConsistentHash(mult int) (*ConsistentHash) {
 	return h
 }
 
-// Alias to NewConsistentHash
+// New is an alias to NewConsistentHash.
 func New(mult int) (*ConsistentHash) {
 	return NewConsistentHash(mult)
 }
@@ -71,7 +72,7 @@ func (h *ConsistentHash) insert_one(s,s_mult string) error {
 	return nil
 }
 
-// insert a new element into the SumList as "mult" instances of crc32 hashes.
+// Insert a new element into the SumList as "mult" instances of crc32 hashes.
 func (h *ConsistentHash) Insert(s string) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -104,7 +105,7 @@ func (h *ConsistentHash) remove_one(s_mult string) error {
 	return nil
 }
 
-// remove a new element from the SumList as "mult" instances of crc32 hashes.
+// Remove a new element from the SumList as "mult" instances of crc32 hashes.
 func (h *ConsistentHash) Remove(s string) error {
 	h.mutex.Lock()
 	defer h.mutex.Unlock()
@@ -117,7 +118,7 @@ func (h *ConsistentHash) Remove(s string) error {
 	return nil
 }
 
-// find the nearest hashed element (in ascending order) 
+// Find the nearest hashed element (in ascending order) 
 // that the candidate string s maps to. should s hash to a greater
 // value than the maximum hashed item in the SumList, loop around
 // and select the zeroth hashed element
