@@ -45,7 +45,7 @@ func TestBuildCH(t *testing.T) {
 	}
 	for k,c := range count {
 		if c != mult {
-			e := fmt.Sprintf("%s appears %d times, not % times",k,c,mult)
+			e := fmt.Sprintf("%s appears %d times, not %d times",k,c,mult)
 			t.Errorf(e)
 		}
 	}
